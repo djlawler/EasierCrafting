@@ -1,6 +1,5 @@
 package de.guntram.mcmod.easiercrafting;
 
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.BrewingStandScreen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -56,9 +55,9 @@ public class ExtendedGuiBrewingStand extends BrewingStandScreen implements SlotC
     }
     
     @Override
-    protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
-        super.drawForeground(context, mouseX, mouseY);
-        recipeBook.drawRecipeList(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
+    protected void drawForeground(MatrixStack stack, final int mouseX, final int mouseY) {
+        super.drawForeground(stack, mouseX, mouseY);
+        recipeBook.drawRecipeList(stack, textRenderer, itemRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
     }
     
     @Override

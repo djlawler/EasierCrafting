@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import net.minecraft.block.entity.BannerPattern;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.resource.language.I18n;
@@ -70,25 +69,24 @@ public class LoomRecipeBook extends RecipeBook {
     }
 
     @Override
-    public int drawRecipeOutputs(DrawContext context, RecipeTreeSet recipes, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
-        return super.drawRecipeOutputs(context, recipes, fontRenderer, xpos, ypos, mouseX, mouseY);
+    public int drawRecipeOutputs(MatrixStack stack, RecipeTreeSet recipes, ItemRenderer itemRenderer, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
+        return super.drawRecipeOutputs(stack, recipes, itemRenderer, fontRenderer, xpos, ypos, mouseX, mouseY);
     }
     
     @Override
-    public void renderSingleRecipeOutput(DrawContext context, TextRenderer fontRenderer,
+    public void renderSingleRecipeOutput(MatrixStack stack, ItemRenderer itemRenderer, TextRenderer fontRenderer,
             ItemStack items, int x, int y) {
 
-        MatrixStack stack = RenderSystem.getModelViewStack();
         stack.push();
         stack.scale(1.5f, 1.5f, 1.5f);
         RenderSystem.applyModelViewMatrix();
-        
-        context.drawItem(items, x*2/3, y*2/3);
+
+        itemRenderer.renderGuiItemIcon(stack, items, x*2/3, y*2/3);
         
         stack.pop();
         RenderSystem.applyModelViewMatrix();
-        
-        context.drawItemInSlot(fontRenderer, items, x, y);
+
+        itemRenderer.renderGuiItemOverlay(stack, fontRenderer, items, x, y);
     }
     
     @Override

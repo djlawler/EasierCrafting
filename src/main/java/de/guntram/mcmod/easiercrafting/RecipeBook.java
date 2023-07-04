@@ -16,7 +16,6 @@ import net.minecraft.block.StairsBlock;
 import net.minecraft.block.WallBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -24,6 +23,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
@@ -155,7 +155,7 @@ public class RecipeBook {
     // left is the X position we want to draw at, Y is (normally) 0.
     // However, if our height is larger than the GUI container height,
     // adjust our Y position accordingly.
-    public void drawRecipeList(DrawContext context, TextRenderer fontRenderer, int left, int height, int mouseX, int mouseY) {
+    public void drawRecipeList(MatrixStack stack, TextRenderer fontRenderer, ItemRenderer itemRenderer, int left, int height, int mouseX, int mouseY) {
 
         // We can't do this in the constructor as we don't yet know sizes from initGui.
         // Also, not in afterInitGui() because we don't know fontRender there.
@@ -201,8 +201,8 @@ public class RecipeBook {
                 //System.out.println("mouse wheel text at"+ypos);
                 // fontRenderer.drawString(I18n.format("message.usemouse"), xOffset+itemSize, ypos, 0xff0000);
                 MinecraftClient.getInstance().getTextureManager().bindTexture(ARROWS);
-                context.drawTexture(ARROWS, xOffset,                ypos,  0, 0, 20, 20);
-                context.drawTexture(ARROWS, xOffset+textBoxSize-20, ypos, 20, 0, 20, 20);
+                screen.drawTexture(stack, xOffset,                ypos,  0, 0, 20, 20);
+                screen.drawTexture(stack, xOffset+textBoxSize-20, ypos, 20, 0, 20, 20);
                 ypos+=itemSize;
             } else {
                 mouseScroll=0;
@@ -216,38 +216,38 @@ public class RecipeBook {
         underMouse=null;
 
         pattern.setY(ypos);
-        pattern.renderButton(context, 0, 0, 0f);    // <-- parameters neccessary but unused
+        pattern.renderButton(stack, 0, 0, 0f);    // <-- parameters neccessary but unused
         ypos+=itemSize*3/2;
         minYtoDraw=ypos;
         ypos-=mouseScroll*itemSize;
-        ypos=drawRecipeOutputs(context, patternMatchingRecipes, fontRenderer, 0, ypos, mouseX, mouseY);
+        ypos=drawRecipeOutputs(stack, patternMatchingRecipes, itemRenderer, fontRenderer, 0, ypos, mouseX, mouseY);
         if (underMouse!=null)
             underMouseIsCraftable=false;
         
         for (String category: craftableCategories.keySet()) {
 //            System.out.println(category+" at "+xOffset+"/"+ypos);
             if (ypos>=minYtoDraw) {
-                context.drawText(fontRenderer, category, xOffset, ypos, 0xffff00, true);
+                fontRenderer.draw(stack, category, xOffset, ypos, 0xffff00);
             }
             ypos+=itemSize;
-            ypos=drawRecipeOutputs(context, craftableCategories.get(category), fontRenderer, 0, ypos, mouseX, mouseY);
+            ypos=drawRecipeOutputs(stack, craftableCategories.get(category), itemRenderer, fontRenderer, 0, ypos, mouseX, mouseY);
         }
         if (underMouse!=null) {
             String displayName = EasierCrafting.recipeDisplayName(underMouse);
-            context.drawText(fontRenderer, displayName, 0, height+3, 0xffff00, true);
+            fontRenderer.draw(stack, displayName, 0, height+3, 0xffff00);
             if (underMouse instanceof ShapedRecipe shapedRecipe) {
                 DefaultedList<Ingredient> ingredients = underMouse.getIngredients();
                 // fontRenderer.draw(stack, "sr", left-20, height, 0x202020);
                 for (int x=0; x<shapedRecipe.getWidth(); x++) {
                     for (int y=0; y<shapedRecipe.getHeight(); y++) {
-                        renderIngredient(context, fontRenderer,
+                        renderIngredient(stack, itemRenderer, fontRenderer,
                                 ingredients.get(x+y*shapedRecipe.getWidth()), itemSize*x, height+itemSize+itemSize*y);                        
                     }
                 }
             } else if (underMouse instanceof ShapelessRecipe || underMouse instanceof CuttingRecipe || underMouse instanceof LoomRecipe) {
                 xpos=0;
                 for (Object ingredient: underMouse.getIngredients()) {
-                    renderIngredient(context, fontRenderer, (Ingredient) ingredient, itemSize*xpos, height+itemSize);
+                    renderIngredient(stack, itemRenderer, fontRenderer, (Ingredient) ingredient, itemSize*xpos, height+itemSize);
                     xpos++;
                 }
             } else if (underMouse instanceof CuttingRecipe cuttingRecipe) {
@@ -255,15 +255,15 @@ public class RecipeBook {
                 //         0, height+itemSize, 0xffff00);
                 xpos=0;
                 for (Ingredient ingredient: cuttingRecipe.getIngredients()) {
-                    renderIngredient(context, fontRenderer, ingredient, itemSize*xpos, height+2*itemSize);
+                    renderIngredient(stack, itemRenderer, fontRenderer, ingredient, itemSize*xpos, height+2*itemSize);
                     xpos++;
                 }
             } else if (underMouse instanceof BrewingRecipe brewingRecipe) {
                 ypos=1;
                 for (Object i: brewingRecipe.getIngredients()) {
                     Ingredient ingredient = (Ingredient) i;
-                    renderIngredient(context, fontRenderer, ingredient, 0, height+ypos*itemSize);
-                    context.drawText(fontRenderer, ingredient.getMatchingStacks()[0].getName(), itemSize, height+5+ypos*itemSize, 0xffff00, true);
+                    renderIngredient(stack, itemRenderer, fontRenderer, ingredient, 0, height+ypos*itemSize);
+                    fontRenderer.draw(stack, ingredient.getMatchingStacks()[0].getName(), itemSize, height+5+ypos*itemSize, 0xffff00);
                     ypos++;
                 }
             }
@@ -275,8 +275,8 @@ public class RecipeBook {
         }
     }
 
-    public int drawRecipeOutputs(DrawContext context, RecipeTreeSet recipes,
-            TextRenderer fontRenderer,
+    public int drawRecipeOutputs(MatrixStack stack, RecipeTreeSet recipes,
+            ItemRenderer itemRenderer, TextRenderer fontRenderer,
             int xpos, int ypos,
             int mouseX, int mouseY) {
 
@@ -284,7 +284,7 @@ public class RecipeBook {
         for (Recipe recipe: recipes) {
             ItemStack items=recipe.getOutput(null);
             if (ypos>=minYtoDraw) {
-                renderSingleRecipeOutput(context, fontRenderer, items, xOffset+xpos, ypos-itemLift);
+                renderSingleRecipeOutput(stack, itemRenderer, fontRenderer, items, xOffset+xpos, ypos-itemLift);
                 if (mouseX>=xpos+xOffset  && mouseX<=xpos+xOffset+itemSize-1
                 &&  mouseY>=ypos-itemLift && mouseY<=ypos-itemLift+itemSize-1) {
                     underMouse=recipe;
@@ -301,21 +301,21 @@ public class RecipeBook {
         return ypos;
     }
     
-    public void renderSingleRecipeOutput(DrawContext context, TextRenderer fontRenderer,
+    public void renderSingleRecipeOutput(MatrixStack stack, ItemRenderer itemRenderer, TextRenderer fontRenderer,
             ItemStack items, int x, int y) {
-        context.drawItem(items, x, y);
-        context.drawItemInSlot(fontRenderer, items, x, y);
+        itemRenderer.renderGuiItemIcon(stack, items, x, y);
+        itemRenderer.renderGuiItemOverlay(stack, fontRenderer, items, x, y);
     }
     
-    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, Ingredient ingredient, int x, int y) {
+    public void renderIngredient(MatrixStack stack, ItemRenderer itemRenderer, TextRenderer fontRenderer, Ingredient ingredient, int x, int y) {
         ItemStack[] stacks=ingredient.getMatchingStacks();
         if (stacks.length==0)
             return;
         int toRender=0;
         if (stacks.length>1)
             toRender=(int) ((System.currentTimeMillis()/333)%stacks.length);
-        context.drawItem(stacks[toRender], x, y);
-        context.drawItemInSlot(fontRenderer, stacks[toRender], x, y);
+        itemRenderer.renderInGuiWithOverrides(stack, stacks[toRender], x, y);
+        itemRenderer.renderGuiItemOverlay(stack, fontRenderer, stacks[toRender], x, y);
     }
     
     public void updateRecipesIn(int ms) {
