@@ -66,6 +66,7 @@ dependencies {
     modImplementation "com.terraformersmc:modmenu:${Versions['modmenu_version']}"
     compileOnly files('RoughlyEnoughItems-6.0.262-alpha-fabric.jar');
     // modCompile("me.shedaniel:RoughlyEnoughItems:5.8.9") { transitive(false) }
+    //modImplementation files('GBfabrictools-1.4+1.19.4.jar');
     modImplementation "de.guntram.mcmod:GBfabrictools:${Versions['gbfabrictools_version']}"
     include    "de.guntram.mcmod:GBfabrictools:${Versions['gbfabrictools_version']}"
     modImplementation "de.guntram.mcmod:crowdin-translate:${Versions['crowdintranslate_version']}"
